@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Video {
+  id           String      @id @default(cuid())
+  bucket       String
+  key          String
+  status       VideoStatus @default(Pending)
+  outputBucket String?
+  outputKey    String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([bucket, key])
+}
+
+enum VideoStatus {
+  Pending
+  Processing
+  Published
+  Failed
+}

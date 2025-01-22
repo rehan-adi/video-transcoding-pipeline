@@ -11,7 +11,7 @@
   "author": "Rehan",
   "license": "ISC",
   "dependencies": {
-    "aws-sdk": "^2.1692.0",
+    "@aws-sdk/client-s3": "^3.732.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -20,7 +20,6 @@
     "multer": "1.4.5-lts.1"
   },
   "devDependencies": {
-    "@types/aws-sdk": "^2.7.4",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/morgan": "^1.9.9",

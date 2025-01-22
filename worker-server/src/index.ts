@@ -1,4 +1,6 @@
 import env from "dotenv";
+import { produce } from "./utils/rabbitmq";
+import prisma from "../../database/src/index";
 import {
   SQSClient,
   ReceiveMessageCommand,
@@ -17,6 +19,7 @@ const sqsClient = new SQSClient({
 });
 
 const receiveMessages = async (): Promise<void> => {
+  // params for receiving messages
   const params = {
     QueueUrl: process.env.SQS_QUEUE_URL!,
     MaxNumberOfMessages: 1,
@@ -30,7 +33,34 @@ const receiveMessages = async (): Promise<void> => {
     const data = await sqsClient.send(command);
 
     if (data.Messages && data.Messages.length > 0) {
-      console.log("Received Message:", data.Messages[0].Body);
+      if (data.Messages[0].Body) {
+        const message = JSON.parse(data.Messages[0].Body);
+
+        // Extract bucket and key from the correct path
+        const record = message.Records[0];
+        const bucket = record.s3.bucket.name;
+        const key = record.s3.object.key;
+
+        // Insert video key and bucket into the database
+        try {
+          await prisma.video.create({
+            data: {
+              key,
+              bucket,
+              status: "Pending",
+            },
+          });
+          console.log("Video inserted into database");
+        } catch (error) {
+          console.error("Error inserting video into database:", error);
+        }
+
+        // Send message to RabbitMQ
+        await produce(JSON.stringify({ key, bucket }));
+        console.log("Message sent to RabbitMQ");
+      } else {
+        throw new Error("Message body is undefined");
+      }
 
       const deleteParams = {
         QueueUrl: process.env.SQS_QUEUE_URL!,

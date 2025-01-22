@@ -12,9 +12,11 @@
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-sqs": "^3.731.1",
+    "amqplib": "^0.10.5",
     "dotenv": "^16.4.7"
   },
   "devDependencies": {
+    "@types/amqplib": "^0.10.6",
     "@types/node": "^22.10.7"
   }
 }

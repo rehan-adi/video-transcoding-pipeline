@@ -1,10 +1,12 @@
 {
   "name": "database",
   "version": "1.0.0",
+  "private": true,
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node ./dist/index.js",
+    "migrate": "npx prisma migrate dev",
+    "generate": "npx prisma generate",
     "build": "tsc"
   },
   "keywords": [],

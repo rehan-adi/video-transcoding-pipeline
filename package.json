@@ -1,0 +1,20 @@
+{
+  "name": "video-transcoding-pipeline",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Video transcoding pipeline with microservices",
+  "scripts": {
+    "start": "pnpm -r run start", 
+    "build": "pnpm -r run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "keywords": [],
+  "author": "Rehan",
+  "license": "ISC",
+  "workspaces": [
+    "database",
+    "services/*"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "rabbitmq",
+  "version": "1.0.0",
+  "private": true,
+  "types": "dist/index.d.ts",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "amqplib": "^0.10.5"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.6"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  }
+}

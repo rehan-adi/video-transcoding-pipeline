@@ -20,6 +20,9 @@ importers:
       amqplib:
         specifier: ^0.10.5
         version: 0.10.5
+      rabbitmq:
+        specifier: workspace:*
+        version: link:../../shared/rabbitmq
     devDependencies:
       '@types/amqplib':
         specifier: ^0.10.6
@@ -67,19 +70,16 @@ importers:
       '@aws-sdk/client-sqs':
         specifier: ^3.731.1
         version: 3.731.1
-      amqplib:
-        specifier: ^0.10.5
-        version: 0.10.5
       database:
         specifier: workspace:^1.0.0
         version: link:../../shared/database
       dotenv:
         specifier: ^16.4.7
         version: 16.4.7
+      rabbitmq:
+        specifier: workspace:^1.0.0
+        version: link:../../shared/rabbitmq
     devDependencies:
-      '@types/amqplib':
-        specifier: ^0.10.6
-        version: 0.10.6
       '@types/node':
         specifier: ^22.10.7
         version: 22.10.9
@@ -96,6 +96,16 @@ importers:
       prisma:
         specifier: ^6.2.1
         version: 6.2.1
+
+  shared/rabbitmq:
+    dependencies:
+      amqplib:
+        specifier: ^0.10.5
+        version: 0.10.5
+    devDependencies:
+      '@types/amqplib':
+        specifier: ^0.10.6
+        version: 0.10.6
 
 packages:
 

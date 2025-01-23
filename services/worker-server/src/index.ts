@@ -1,6 +1,6 @@
 import env from "dotenv";
 import prisma from "database";
-import { produce } from "./utils/rabbitmq";
+import { connectProducer, publishMessage } from "rabbitmq";
 import {
   SQSClient,
   ReceiveMessageCommand,
@@ -17,6 +17,23 @@ const sqsClient = new SQSClient({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
 });
+
+// Initialize RabbitMQ connection once
+let producerConnected = false;
+const initializeRabbitMQ = async (): Promise<void> => {
+  if (!producerConnected) {
+    try {
+      await connectProducer();
+      producerConnected = true;
+      console.log("Connected to RabbitMQ");
+    } catch (error) {
+      console.error("Error connecting to RabbitMQ:", error);
+      throw new Error(
+        "Failed to connect to RabbitMQ, stopping further processing"
+      );
+    }
+  }
+};
 
 const receiveMessages = async (): Promise<void> => {
   // params for receiving messages
@@ -54,10 +71,15 @@ const receiveMessages = async (): Promise<void> => {
         } catch (error) {
           console.error("Error inserting video into database:", error);
         }
+        await initializeRabbitMQ();
 
-        // Send message to RabbitMQ
-        await produce(JSON.stringify({ key, bucket }));
-        console.log("Message sent to RabbitMQ");
+        try {
+          await publishMessage(JSON.stringify({ key, bucket }));
+          console.log("Message sent to RabbitMQ");
+        } catch (rabbitmqError) {
+          console.error("Error sending message to RabbitMQ:", rabbitmqError);
+          return;
+        }
       } else {
         throw new Error("Message body is undefined");
       }

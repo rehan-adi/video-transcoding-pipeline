@@ -17,16 +17,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.732.0
         version: 3.733.0
-      amqplib:
-        specifier: ^0.10.5
-        version: 0.10.5
       rabbitmq:
         specifier: workspace:*
         version: link:../../shared/rabbitmq
-    devDependencies:
-      '@types/amqplib':
-        specifier: ^0.10.6
-        version: 0.10.6
 
   services/upload-server:
     dependencies:

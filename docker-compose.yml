@@ -1,0 +1,24 @@
+services:
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq-queue
+    ports:
+      - "5672:5672"      
+      - "15672:15672"  
+    environment:
+      RABBITMQ_DEFAULT_USER: user 
+      RABBITMQ_DEFAULT_PASS: password 
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: video-transcoder-db
+    restart: always
+    ports:
+      - "5432:5432"   
+    env_file:
+      - ./database/.env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

@@ -1,6 +1,6 @@
 import env from "dotenv";
 import { produce } from "./utils/rabbitmq";
-import {prisma} from "../../../database/src/index";
+import prisma from "../../../database/src/index";
 import {
   SQSClient,
   ReceiveMessageCommand,

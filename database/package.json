@@ -2,21 +2,26 @@
   "name": "database",
   "version": "1.0.0",
   "private": true,
+  "types": "dist/index.d.ts",
   "description": "",
   "main": "index.js",
   "scripts": {
     "migrate": "npx prisma migrate dev",
-    "generate": "npx prisma generate",
-    "build": "tsc"
+    "build": "prisma generate && tsc"
   },
-  "keywords": [],
   "author": "Rehan",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/node": "^22.10.7",
     "prisma": "^6.2.1"
   },
   "dependencies": {
     "@prisma/client": "6.2.1"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   }
 }

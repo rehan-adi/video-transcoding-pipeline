@@ -13,7 +13,7 @@ export const uploadFile = async (req: Request, res: Response) => {
     const params = {
       Bucket: process.env.AWS_BUCKET_NAME!,
       Key: req.file.originalname,
-      Body: req.file.buffer,
+      Body: fs.createReadStream(req.file.path),
       ContentType: req.file.mimetype,
     };
 

@@ -91,12 +91,42 @@ export const processVideoForHLS = async (
       .on("progress", (progress) => {
         console.log(`Processing: ${progress.percent?.toFixed(2)}%`);
       })
-      .on("error", (err: Error) => {
+      .on("error", async (err: Error) => {
+        try {
+          await prisma.video.update({
+            where: {
+              bucket_key: {
+                bucket: bucket,
+                key: key,
+              },
+            },
+            data: {
+              status: "Failed",
+            },
+          });
+        } catch (error) {
+          console.error("Error during video processing database update", error);
+        }
         console.error("Error during video processing:", err.message);
         reject(err);
       })
-      .on("end", () => {
+      .on("end", async () => {
         console.log("HLS processing complete.");
+        try {
+          await prisma.video.update({
+            where: {
+              bucket_key: {
+                bucket: bucket,
+                key: key,
+              },
+            },
+            data: {
+              status: "Published",
+            },
+          });
+        } catch (error) {
+          console.error("Error updating video status to 'Published':", error);
+        }
         resolve();
       })
       .run();

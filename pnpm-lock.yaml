@@ -17,6 +17,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.732.0
         version: 3.733.0
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.4.7
       rabbitmq:
         specifier: workspace:*
         version: link:../../shared/rabbitmq

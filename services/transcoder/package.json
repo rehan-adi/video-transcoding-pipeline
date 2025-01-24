@@ -10,7 +10,8 @@
   "author": "Rehan",
   "license": "MIT",
   "dependencies": {
-    "rabbitmq": "workspace:*",
-    "@aws-sdk/client-s3": "^3.732.0"
+    "@aws-sdk/client-s3": "^3.732.0",
+    "dotenv": "^16.4.7",
+    "rabbitmq": "workspace:*"
   }
 }

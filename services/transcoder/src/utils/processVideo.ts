@@ -10,12 +10,12 @@ export const processVideoForHLS = async (
   key: string,
   bucket: string
 ) => {
-  return new Promise<void>((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     // Generate a unique video ID based on the original key and current timestamp
     const videoId = `${path.basename(
       key,
       path.extname(key)
-    )}_${Date.now()}_${uuidv4()}`;
+    )}_${Date.now()}_${uuidv4()}` as string;
     const videoOutputDir = path.join(outputDir, videoId);
 
     if (!fs.existsSync(videoOutputDir)) {
@@ -143,7 +143,7 @@ export const processVideoForHLS = async (
         } catch (error) {
           console.error("Error updating video status to 'Published':", error);
         }
-        resolve();
+        resolve(videoId);
       })
       .run();
   });

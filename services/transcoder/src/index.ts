@@ -1,22 +1,28 @@
 import fs from "fs";
 import path from "path";
+import env from "dotenv";
 import { s3 } from "./utils/s3";
 import { promisify } from "util";
 import { pipeline } from "stream";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { createWriteStream } from "fs";
 import { processVideoForHLS } from "./utils/processVideo";
 import { connectConsumer, consumeMessages } from "rabbitmq";
-import { createWriteStream, mkdirSync, existsSync } from "fs";
+import {
+  GetObjectCommand,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
+import {
+  getAllFiles,
+  ensureDownloadDirectory,
+  deleteDirectoryRecursive,
+} from "./utils/utils";
+
+env.config();
+
+const OUTPUT_BUCKET = process.env.OUTPUT_BUCKET!;
 
 const pipelineAsync = promisify(pipeline);
-
-const ensureDownloadDirectory = () => {
-  const downloadDir = path.resolve(__dirname, "downloads");
-  if (!existsSync(downloadDir)) {
-    mkdirSync(downloadDir, { recursive: true });
-  }
-  return downloadDir;
-};
 
 const main = async () => {
   try {
@@ -50,14 +56,62 @@ const main = async () => {
 
         console.log(`Video downloaded successfully to ${filePath}`);
 
+        const outputDir = path.join(__dirname, "output");
+
         try {
-          await processVideoForHLS(
+          const videoId = await processVideoForHLS(
             filePath,
-            path.join("./output"),
+            outputDir,
             key,
             bucket
           );
           console.log("Video processing complete");
+
+          const videoOutputDir = path.join(outputDir, videoId);
+
+          // Upload the entire videoId folder to S3
+          const transcodedFiles = getAllFiles(videoOutputDir);
+          console.log("Transcoded files:", transcodedFiles);
+
+          for (const transcodedFilePath of transcodedFiles) {
+            const transcodedFileName = path.relative(
+              videoOutputDir,
+              transcodedFilePath
+            ); // Maintain relative paths
+            const uploadKey = path.join(videoId, transcodedFileName);
+
+            // Read and upload each file
+            const fileContent = await fs.promises.readFile(transcodedFilePath);
+
+            await s3.send(
+              new PutObjectCommand({
+                Bucket: OUTPUT_BUCKET,
+                Key: uploadKey,
+                Body: fileContent,
+                ContentType: transcodedFileName.endsWith(".m3u8")
+                  ? "application/vnd.apple.mpegurl"
+                  : "video/MP2T",
+              })
+            );
+
+            console.log(`Uploaded ${uploadKey} to ${OUTPUT_BUCKET}`);
+          }
+
+          // Delete the processed video from S3
+          const deleteCommand = new DeleteObjectCommand({
+            Bucket: bucket,
+            Key: key,
+          });
+
+          await s3.send(deleteCommand);
+          console.log("Deleted video file from S3");
+
+          // Delete the output directory
+          try {
+            deleteDirectoryRecursive(videoOutputDir);
+          } catch (error) {
+            console.error("Error deleting video output directory:", error);
+          }
         } catch (error) {
           console.error("Error during video processing:", error);
         } finally {

@@ -10,14 +10,17 @@ export const processVideoForHLS = async (
   bucket: string
 ) => {
   return new Promise<void>((resolve, reject) => {
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
+    const videoId = path.basename(key, path.extname(key));
+    const videoOutputDir = path.join(outputDir, videoId);
+
+    if (!fs.existsSync(videoOutputDir)) {
+      fs.mkdirSync(videoOutputDir, { recursive: true });
     }
 
     // Start the ffmpeg process to transcode the video for HLS
     ffmpeg(inputFile)
       // Output for 480p video stream
-      .output(path.join(outputDir, "480p.m3u8"))
+      .output(path.join(videoOutputDir, "480p.m3u8"))
       .videoCodec("libx264")
       .size("854x480")
       .outputOptions(
@@ -34,7 +37,7 @@ export const processVideoForHLS = async (
       )
 
       // Output for 720p video stream
-      .output(path.join(outputDir, "720p.m3u8"))
+      .output(path.join(videoOutputDir, "720p.m3u8"))
       .videoCodec("libx264")
       .size("1280x720")
       .outputOptions(
@@ -51,7 +54,7 @@ export const processVideoForHLS = async (
       )
 
       // Output for 1080p video stream
-      .output(path.join(outputDir, "1080p.m3u8"))
+      .output(path.join(videoOutputDir, "1080p.m3u8"))
       .videoCodec("libx264")
       .size("1920x1080")
       .outputOptions(

@@ -1,3 +1,4 @@
+import fs from "fs";
 import path from "path";
 import { s3 } from "./utils/s3";
 import { promisify } from "util";
@@ -49,9 +50,22 @@ const main = async () => {
 
         console.log(`Video downloaded successfully to ${filePath}`);
 
-        processVideoForHLS(filePath, path.join("./output"), key, bucket);
-
-        console.log("Video processing complete");
+        try {
+          await processVideoForHLS(
+            filePath,
+            path.join("./output"),
+            key,
+            bucket
+          );
+          console.log("Video processing complete");
+        } catch (error) {
+          console.error("Error during video processing:", error);
+        } finally {
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            console.log("Deleted video file from downloads folder");
+          }
+        }
       } catch (error) {
         console.error("Error processing message:", error);
         throw error;

@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import prisma from "database";
 import ffmpeg from "fluent-ffmpeg";
+import { v4 as uuidv4 } from "uuid";
 
 export const processVideoForHLS = async (
   inputFile: string,
@@ -10,17 +11,29 @@ export const processVideoForHLS = async (
   bucket: string
 ) => {
   return new Promise<void>((resolve, reject) => {
-    const videoId = path.basename(key, path.extname(key));
+    // Generate a unique video ID based on the original key and current timestamp
+    const videoId = `${path.basename(
+      key,
+      path.extname(key)
+    )}_${Date.now()}_${uuidv4()}`;
     const videoOutputDir = path.join(outputDir, videoId);
 
     if (!fs.existsSync(videoOutputDir)) {
       fs.mkdirSync(videoOutputDir, { recursive: true });
     }
 
+    const resolutions = ["480p", "720p", "1080p"];
+    resolutions.forEach((res) => {
+      const resolutionDir = path.join(videoOutputDir, res);
+      if (!fs.existsSync(resolutionDir)) {
+        fs.mkdirSync(resolutionDir, { recursive: true });
+      }
+    });
+
     // Start the ffmpeg process to transcode the video for HLS
     ffmpeg(inputFile)
       // Output for 480p video stream
-      .output(path.join(videoOutputDir, "480p.m3u8"))
+      .output(path.join(videoOutputDir, "480p", "480p.m3u8"))
       .videoCodec("libx264")
       .size("854x480")
       .outputOptions(
@@ -37,7 +50,7 @@ export const processVideoForHLS = async (
       )
 
       // Output for 720p video stream
-      .output(path.join(videoOutputDir, "720p.m3u8"))
+      .output(path.join(videoOutputDir, "720p", "720.m3u8"))
       .videoCodec("libx264")
       .size("1280x720")
       .outputOptions(
@@ -54,7 +67,7 @@ export const processVideoForHLS = async (
       )
 
       // Output for 1080p video stream
-      .output(path.join(videoOutputDir, "1080p.m3u8"))
+      .output(path.join(videoOutputDir, "1080p", "1080.m3u8"))
       .videoCodec("libx264")
       .size("1920x1080")
       .outputOptions(

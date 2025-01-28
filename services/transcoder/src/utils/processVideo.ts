@@ -15,75 +15,55 @@ export const processVideoForHLS = async (
     const videoId = `${path.basename(
       key,
       path.extname(key)
-    )}_${Date.now()}_${uuidv4()}` as string;
+    )}_${Date.now()}_${uuidv4()}`;
     const videoOutputDir = path.join(outputDir, videoId);
 
     if (!fs.existsSync(videoOutputDir)) {
       fs.mkdirSync(videoOutputDir, { recursive: true });
     }
 
-    const resolutions = ["480p", "720p", "1080p"];
-    resolutions.forEach((res) => {
-      const resolutionDir = path.join(videoOutputDir, res);
+    const resolutions = [
+      { label: "480p", size: "854x480" },
+      { label: "720p", size: "1280x720" },
+      { label: "1080p", size: "1920x1080" },
+    ];
+
+    const ffmpegInstance = ffmpeg(inputFile);
+
+    resolutions.forEach(({ label, size }) => {
+      const resolutionDir = path.join(videoOutputDir, label);
+
       if (!fs.existsSync(resolutionDir)) {
         fs.mkdirSync(resolutionDir, { recursive: true });
       }
+
+      // HLS Output
+      ffmpegInstance
+        .output(path.join(resolutionDir, `${label}.m3u8`))
+        .videoCodec("libx264")
+        .size(size)
+        .outputOptions(
+          "-preset",
+          "veryfast",
+          "-g",
+          "48",
+          "-sc_threshold",
+          "0",
+          "-hls_time",
+          "6",
+          "-hls_playlist_type",
+          "vod"
+        );
+
+      // MP4 Output
+      ffmpegInstance
+        .output(path.join(videoOutputDir, `${label}.mp4`))
+        .videoCodec("libx264")
+        .size(size)
+        .outputOptions("-preset", "veryfast", "-crf", "23");
     });
 
-    // Start the ffmpeg process to transcode the video for HLS
-    ffmpeg(inputFile)
-      // Output for 480p video stream
-      .output(path.join(videoOutputDir, "480p", "480p.m3u8"))
-      .videoCodec("libx264")
-      .size("854x480")
-      .outputOptions(
-        "-preset",
-        "veryfast",
-        "-g",
-        "48",
-        "-sc_threshold",
-        "0",
-        "-hls_time",
-        "6",
-        "-hls_playlist_type",
-        "vod"
-      )
-
-      // Output for 720p video stream
-      .output(path.join(videoOutputDir, "720p", "720.m3u8"))
-      .videoCodec("libx264")
-      .size("1280x720")
-      .outputOptions(
-        "-preset",
-        "veryfast",
-        "-g",
-        "48",
-        "-sc_threshold",
-        "0",
-        "-hls_time",
-        "6",
-        "-hls_playlist_type",
-        "vod"
-      )
-
-      // Output for 1080p video stream
-      .output(path.join(videoOutputDir, "1080p", "1080.m3u8"))
-      .videoCodec("libx264")
-      .size("1920x1080")
-      .outputOptions(
-        "-preset",
-        "veryfast",
-        "-g",
-        "48",
-        "-sc_threshold",
-        "0",
-        "-hls_time",
-        "6",
-        "-hls_playlist_type",
-        "vod"
-      )
-
-      // Event listeners
+    ffmpegInstance
       .on("start", async (commandLine) => {
         console.log("FFmpeg process started with command:", commandLine);
 
@@ -118,6 +98,7 @@ export const processVideoForHLS = async (
             },
             data: {
               status: "Failed",
+              updatedAt: new Date(),
             },
           });
         } catch (error) {
@@ -127,7 +108,7 @@ export const processVideoForHLS = async (
         reject(err);
       })
       .on("end", async () => {
-        console.log("HLS processing complete.");
+        console.log("Video processing complete.");
         try {
           await prisma.video.update({
             where: {
@@ -138,6 +119,7 @@ export const processVideoForHLS = async (
             },
             data: {
               status: "Published",
+              updatedAt: new Date(),
             },
           });
         } catch (error) {

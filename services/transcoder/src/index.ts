@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import env from "dotenv";
+import prisma from "database";
 import { s3 } from "./utils/s3";
 import { promisify } from "util";
 import { pipeline } from "stream";
@@ -70,31 +71,38 @@ const main = async () => {
           const videoOutputDir = path.join(outputDir, videoId);
 
           // Upload the entire videoId folder to S3
-          const transcodedFiles = getAllFiles(videoOutputDir);
-          console.log("Transcoded files:", transcodedFiles);
+          const mp4Files = getAllFiles(videoOutputDir);
+          console.log("MP4 files to upload:", mp4Files);
 
-          for (const transcodedFilePath of transcodedFiles) {
-            const transcodedFileName = path.relative(
-              videoOutputDir,
-              transcodedFilePath
-            ); // Maintain relative paths
-            const uploadKey = path.join(videoId, transcodedFileName);
+          for (const mp4FilePath of mp4Files) {
+            const resolution = path.basename(mp4FilePath, ".mp4");
+            const uploadKey = path.join(videoId, `${resolution}.mp4`);
 
-            // Read and upload each file
-            const fileContent = await fs.promises.readFile(transcodedFilePath);
+            // Read file content
+            const fileContent = await fs.promises.readFile(mp4FilePath);
 
             await s3.send(
               new PutObjectCommand({
                 Bucket: OUTPUT_BUCKET,
                 Key: uploadKey,
                 Body: fileContent,
-                ContentType: transcodedFileName.endsWith(".m3u8")
-                  ? "application/vnd.apple.mpegurl"
-                  : "video/MP2T",
+                ContentType: "video/mp4",
               })
             );
 
-            console.log(`Uploaded ${uploadKey} to ${OUTPUT_BUCKET}`);
+            console.log(
+              `Uploaded ${resolution}.mp4 to ${OUTPUT_BUCKET}/${uploadKey}`
+            );
+
+            await prisma.video.update({
+              where: {
+                bucket_key: { bucket, key },
+              },
+              data: {
+                outputBucket: OUTPUT_BUCKET,
+                outputKey: videoId,
+              },
+            });
           }
 
           // Delete the processed video from S3

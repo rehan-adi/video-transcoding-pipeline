@@ -6,17 +6,17 @@ import fs, {
   constants,
 } from "fs";
 
-export const getAllFiles = (dirPath: string): string[] => {
-  const files: string[] = [];
-  fs.readdirSync(dirPath).forEach((file) => {
-    const filePath = path.join(dirPath, file);
-    if (fs.lstatSync(filePath).isDirectory()) {
-      files.push(...getAllFiles(filePath));
-    } else {
-      files.push(filePath);
+export const getAllFiles = (dir: string, fileList: string[] = []): string[] => {
+  const files = fs.readdirSync(dir);
+  files.forEach((file) => {
+    const filePath = path.join(dir, file);
+    if (fs.statSync(filePath).isDirectory()) {
+      getAllFiles(filePath, fileList);
+    } else if (file.endsWith(".mp4")) {
+      fileList.push(filePath);
     }
   });
-  return files;
+  return fileList;
 };
 
 export const ensureDownloadDirectory = () => {
